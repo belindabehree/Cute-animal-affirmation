@@ -1,0 +1,195 @@
+import {
+  WidgetLocation,
+  AppEvents,
+  RNPlugin,
+  declareIndexPlugin,
+  ReactRNPlugin,
+} from "@remnote/plugin-sdk";
+import "../style.css";
+
+async function showDoggo(
+  plugin: RNPlugin,
+  position?: { top?: number; bottom?: number; left?: number; right?: number },
+  classContainer?: string
+) {
+  await plugin.window.openFloatingWidget(
+    "puppy_popup",
+    position || { top: 0, bottom: 0, left: 0, right: 0 },
+    classContainer
+  );
+}
+
+async function onActivate(plugin: ReactRNPlugin) {
+  // Initialize the seenCards session storage variable.
+  // Session storage is like global state for your plugin
+  // which can be accessed in your widget components.
+  //
+  // It is better than a normal global variable in cases
+  // where you want to react to changes in the variable's
+  // value - components can use the `useSessionStorage`
+  // hook to re-render when a session storage variable changes.
+  await plugin.storage.setSession("seenCards", 0);
+
+  await plugin.settings.registerNumberSetting({
+    id: "cardInterval",
+    title: "Number of cards between puppies",
+    defaultValue: 10,
+  });
+
+  // When the user completes a card, we check if they
+  // have seen the number of cards specified in the card
+  // interval setting. If so we show the popup.
+  plugin.event.addListener(AppEvents.QueueCompleteCard, undefined, async () => {
+    const cardInterval = Number(
+      await plugin.settings.getSetting("cardInterval")
+    );
+    const seenCards: number =
+      ((await plugin.storage.getSession<number>("seenCards")) || 0) + 1;
+    await plugin.storage.setSession("seenCards", seenCards);
+    if (seenCards % cardInterval === 0) {
+      // Opens a floating widget popup 180px above the show answer buttons.
+      // The "rn-queue..." string is a classname representing the container
+      // around the show answer buttons.
+      // We use a small setTimeout delay to make sure the queue and show answer
+      // button have finished rendering before trying to show the popup.
+      setTimeout(() => {
+        showDoggo(plugin, { top: -180 }, "rn-queue__show-answer-btn");
+      }, 25);
+    }
+  });
+
+  // Reset the seen cards counter when the user enters the queue.
+  plugin.event.addListener(AppEvents.QueueEnter, undefined, () => {
+    plugin.storage.setSession("seenCards", 0);
+  });
+
+  // A test command so you can see how the popup looks.
+  await plugin.app.registerCommand({
+    id: "showDoggo",
+    name: "Show Doggo",
+    action: () => showDoggo(plugin),
+  });
+
+  // Register the puppy popup widget component.
+  await plugin.app.registerWidget(
+    "puppy_popup",
+    WidgetLocation.FloatingWidget,
+    {
+      dimensions: {
+        width: 300,
+        height: "auto",
+      },
+    }
+  );
+  import {
+  AppEvents,
+  renderWidget,
+  useAPIEventListener,
+  usePlugin,
+  useSessionStorageState,
+  WidgetLocation,
+} from "@remnote/plugin-sdk";
+import { randomDoggo } from "../lib/doggos";
+import { randomMotivation } from "../lib/motivation";
+
+function PuppyPopup() {
+  const plugin = usePlugin();
+  const src = randomDoggo();
+  // Get the seenCards value from session storage
+  const [seenCards] = useSessionStorageState("seenCards", 0);
+
+  useAPIEventListener(AppEvents.QueueCompleteCard, undefined, async () => {
+    const { floatingWidgetId } = await plugin.widget.getWidgetContext<WidgetLocation.FloatingWidget>();
+    await plugin.window.closeFloatingWidget(floatingWidgetId);
+  });
+
+  return (
+    <>
+      {
+        <div
+          onClick={async () => {
+            // Access the "widget context" for the current widget.
+            // The widget context for widgets positioned in floating
+            // widgets contains the floatingWidgetId which we can use
+            // to close the widget when the user clicks on the popup.
+            const { floatingWidgetId } = await plugin.widget.getWidgetContext<WidgetLocation.FloatingWidget>();
+            await plugin.window.closeFloatingWidget(floatingWidgetId);
+          }}
+          className="cursor-pointer rounded-md border border-solid grid gap-1 grid-cols-2 rn-clr-background-primary rn-clr-content-primary"
+        >
+          <img src={src} className="max-h-[200px] w-auto rounded-l-md" />
+          <div className="flex text-center text-lg items-center pr-2">
+            Wow! {seenCards} cards done! {randomMotivation()}!
+          </div>
+        </div>
+      }
+    </>
+  );
+}
+
+renderWidget(PuppyPopup);
+  import { getRandomInt } from "./utils";
+
+// mostly from: 
+    "%LOCAL_FILE%dTL32zpdZn7zSd1wUMTEUx8uMad3NtbcqzHfuYyTU5oypHci8bn3mMnIiYRvXUfl6dd1cvPJToRUWvDdMbQZBEMPkLyH2nQigpHrgg16r8wWgt2kEm4gnXl4DxjZqEWn.jpeg",
+  "va.media.tumblr.com/tumblr rt9unzAAo11w4nksa 720.mp4",
+  "%LOCAL_FILE%WPRr9NiBd6wW8GZA91ANiv59OxRKWDgilbHlthGnoPUk3BwtctOndCeWJ70X6jQxi17SFLHTf9Qip4dr11OG1JewTUzEN8_LJ6yzS2sUOAmXlvZBzaFzym0oDsvsF-Hn.jpeg",
+  "%LOCAL_FILE%ASp8E7p2WQ4onp9nDfUmiehZR7jm0h9shIo4AsVg49NWSqt7UW8BRlAmZ5YL9WU979EZeCbKSfYZDfmgmkl7W_xqWnRfs9OgjK_aoaHux-VVK033hr0v6YQZ548_Y9Jq.jpeg",
+  "64.media.tumblr.com/72805d150e7b5237ca336fe5adde95a5/0b9c37fe21488c7c f5/s500x750/9ab1d1d40ac4490737d2fedcd97b5905f92897eb.pnj",
+  "%LOCAL_FILE%t9l-wLYdz9ib0KLNL5MfLPknn_jzebMV1z5q6q8mr3gvG4lgZ9eokuKHoDGz-Hu2KLYQ0mbNpUrxMgg33rOOF7CthGfKQ9VhYKbmWcvlkXUcRyOcyDxvzi9zy2jd50Jm.jpeg",
+  "va.media.tumblr.com/tumblr rgi4z39mT31z9n8el.mp4",
+  "va.media.tumblr.com/tumblr rv0uzbW5iT1xoyw8p.mp4",
+  
+    
+    ,};
+    import { RNPlugin } from "@remnote/plugin-sdk";
+
+function getTime() {
+  return new Date().toTimeString().substr(0, 8);
+}
+
+export function log(
+  plugin: RNPlugin,
+  message: string,
+  notify: boolean = false
+) {
+  console.log(`[${getTime()}] (Puppy Reinforcement): ${message}`);
+  if (notify) {
+    plugin.app.toast(message);
+  }
+}
+import { getRandomInt } from "./utils";
+
+export const motivations = [
+  "Well done",
+  "Bravo",
+  "Congratulations",
+  "Good",
+  "Great",
+  "Hooray",
+  "Hurrah",
+  "Good job",
+  "There you go",
+  "Good on you",
+  "Great job",
+  "Awesome work",
+  "Good work",
+  "Great work",
+  "Take a bow",
+  "Nice job",
+  "Right on",
+  "Keep it up",
+  "Nice work",
+  "Great effort",
+  "Awesome",
+];
+
+export const randomMotivation = () => {
+  const idx = getRandomInt(0, motivations.length - 1);
+  return motivations[idx];
+};
+ export function getRandomInt(min: number, max: number) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

@@ -1,0 +1,22 @@
+{
+  "manifestVersion": 1,
+  "id": "Cute_Animals",
+  "name": "Cute_Animals_Plugin",
+  "author": "Belinda_Behree",
+  "repoUrl": "https://github.com/remnoteio/remnote-simple-snippet-template/blob/c86a8defd6e7881bd7e90ae4ffb0f08969947fb7/manifest.json",
+  "version": {
+    "major": 0,
+    "minor": 0,
+    "patch": 1
+  },
+  "theme": [],
+  "enableOnMobile": false,
+  "description": "Enjoy_cute_animal_photos/videos_while_doing_flashcards",
+  "requestNative": false,
+  "requiredScopes": [
+    {
+      "type": "All",
+      "level": "Read"
+    }
+  ]
+}
